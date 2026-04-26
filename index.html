@@ -1,0 +1,450 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lewis Structure &amp; Molecular Analysis</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────────────────── -->
+<header class="app-header">
+  <div class="app-logo">
+    <div class="logo-icon">
+      <svg width="34" height="34" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Angular bent-molecule motif -->
+        <line x1="8"  y1="30" x2="20" y2="14" stroke="#4a90e2" stroke-width="2.4" stroke-linecap="round"/>
+        <line x1="20" y1="14" x2="32" y2="30" stroke="#4a90e2" stroke-width="2.4" stroke-linecap="round"/>
+        <circle cx="8"  cy="30" r="4.2" fill="#e25c4a"/>
+        <circle cx="32" cy="30" r="4.2" fill="#e25c4a"/>
+        <circle cx="20" cy="14" r="5.2" fill="#4ae2a0"/>
+        <!-- Lone pair dots above center -->
+        <circle cx="17" cy="6" r="1.3" fill="#e0e6f0"/>
+        <circle cx="23" cy="6" r="1.3" fill="#e0e6f0"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <h1>Lewis Structure &amp; Molecular Analysis</h1>
+      <p>Dot structures • VSEPR • IMF • Polarity</p>
+    </div>
+  </div>
+  <span class="app-version">v1.0</span>
+</header>
+
+<!-- ── MAIN LAYOUT ────────────────────────────────────────────────────── -->
+<div class="app-body">
+  <div class="panel-layout">
+
+    <!-- ─── SIDEBAR ─────────────────────────────────────────────────── -->
+    <aside class="controls-panel">
+
+      <!-- SUBSTANCE INPUT ------------------------------------------------ -->
+      <div class="control-group">
+        <div class="group-title">Substance Input</div>
+
+        <label for="formula-input">Formula</label>
+        <input type="text" id="formula-input" class="formula-input"
+               placeholder="e.g. H2O, NH4{+1}, NO3{-1}, Ca(OH)2, Li3N" />
+
+        <label style="margin-top:10px;">Compound type</label>
+        <div class="two-col">
+          <button class="style-btn active" data-bond-type="auto" id="btn-type-auto">Auto</button>
+          <button class="style-btn" data-bond-type="covalent" id="btn-type-cov">Covalent</button>
+        </div>
+        <div class="two-col" style="margin-top:4px;">
+          <button class="style-btn" data-bond-type="ionic" id="btn-type-ion" style="grid-column:1 / span 2;">Ionic</button>
+        </div>
+
+        <button class="action-btn primary" id="btn-generate" style="margin-top:12px;">Generate</button>
+
+        <div class="mini-note">
+          Charge: <code>{+1}</code>, <code>{-1}</code>, <code>^+</code>, <code>2+</code>, <code>+</code>.<br>
+          Groups: <code>Ca(OH)2</code>, <code>Mg(NO3)2</code>, <code>Al2(SO4)3</code>.
+        </div>
+      </div>
+
+      <!-- QUICK EXAMPLES ------------------------------------------------- -->
+      <div class="control-group">
+        <div class="group-title">Quick Examples</div>
+
+        <div class="group-subtitle" style="font-size:11px; color:var(--text-dim); margin:6px 0 4px;">
+          Small molecules
+        </div>
+        <div class="two-col">
+          <button class="style-btn example-btn" data-formula="H2O" data-tab="molecules">H₂O</button>
+          <button class="style-btn example-btn" data-formula="NH3" data-tab="molecules">NH₃</button>
+          <button class="style-btn example-btn" data-formula="CO2" data-tab="molecules">CO₂</button>
+          <button class="style-btn example-btn" data-formula="CH4" data-tab="molecules">CH₄</button>
+          <button class="style-btn example-btn" data-formula="BF3" data-tab="molecules">BF₃</button>
+          <button class="style-btn example-btn" data-formula="SF6" data-tab="molecules">SF₆</button>
+        </div>
+
+        <div class="group-subtitle" style="font-size:11px; color:var(--text-dim); margin:10px 0 4px;">
+          Ions &amp; ionic compounds
+        </div>
+        <div class="two-col">
+          <button class="style-btn example-btn" data-formula="NH4{+1}" data-tab="molecules">NH₄⁺</button>
+          <button class="style-btn example-btn" data-formula="NO3{-1}" data-tab="molecules">NO₃⁻</button>
+          <button class="style-btn example-btn" data-formula="SO4{-2}" data-tab="molecules">SO₄²⁻</button>
+          <button class="style-btn example-btn" data-formula="NaCl" data-tab="molecules">NaCl</button>
+          <button class="style-btn example-btn" data-formula="Li3N" data-tab="molecules">Li₃N</button>
+          <button class="style-btn example-btn" data-formula="CaCO3" data-tab="molecules">CaCO₃</button>
+        </div>
+
+        <div class="group-subtitle" style="font-size:11px; color:var(--text-dim); margin:10px 0 4px;">
+          Organic chains
+        </div>
+        <div class="two-col">
+          <button class="style-btn example-btn" data-formula="CH3CH2OH" data-tab="molecules">Ethanol</button>
+          <button class="style-btn example-btn" data-formula="CH3COOH" data-tab="molecules">Acetic acid</button>
+          <button class="style-btn example-btn" data-formula="CH3CH2CH3" data-tab="molecules">Propane</button>
+          <button class="style-btn example-btn" data-formula="CH3OCH3" data-tab="molecules">DME</button>
+        </div>
+
+        <div class="group-subtitle" style="font-size:11px; color:var(--text-dim); margin:10px 0 4px;">
+          Rings &amp; aromatics
+        </div>
+        <div class="two-col">
+          <button class="style-btn example-btn" data-formula="benzene" data-tab="rings">Benzene</button>
+          <button class="style-btn example-btn" data-formula="phenol" data-tab="rings">Phenol</button>
+          <button class="style-btn example-btn" data-formula="p-xylene" data-tab="rings">p-Xylene</button>
+          <button class="style-btn example-btn" data-formula="pyridine" data-tab="rings">Pyridine</button>
+          <button class="style-btn example-btn" data-formula="furan" data-tab="rings">Furan</button>
+          <button class="style-btn example-btn" data-formula="cyclohexane" data-tab="rings">Cyclohexane</button>
+        </div>
+
+        <div class="group-subtitle" style="font-size:11px; color:var(--text-dim); margin:10px 0 4px;">
+          Sugars
+        </div>
+        <div class="two-col">
+          <button class="style-btn example-btn" data-formula="alpha-glucose" data-tab="rings">α-Glucose</button>
+          <button class="style-btn example-btn" data-formula="beta-glucose" data-tab="rings">β-Glucose</button>
+        </div>
+      </div>
+
+      <!-- DISPLAY OPTIONS ----------------------------------------------- -->
+      <div class="control-group">
+        <div class="group-title">Display Options</div>
+
+        <div class="substance-row">
+          <label>Atom color</label>
+          <button class="color-swatch-btn" id="atom-color-btn"
+                  style="width:36px;height:24px;background:#e0e6f0;"></button>
+        </div>
+        <div class="substance-row">
+          <label>Bond color</label>
+          <button class="color-swatch-btn" id="bond-color-btn"
+                  style="width:36px;height:24px;background:#e0e6f0;"></button>
+        </div>
+        <div class="substance-row">
+          <label>Dot color</label>
+          <button class="color-swatch-btn" id="dot-color-btn"
+                  style="width:36px;height:24px;background:#e0e6f0;"></button>
+        </div>
+
+        <div class="display-divider"></div>
+
+        <label>Dot size</label>
+        <div class="slider-input-row">
+          <input type="range"  id="dot-size-range" min="2" max="10" step="0.5" value="4.5"/>
+          <input type="number" id="dot-size-num"   min="2" max="10" step="0.5" value="4.5"/>
+        </div>
+
+        <label>Font size</label>
+        <div class="slider-input-row">
+          <input type="range"  id="font-size-range" min="12" max="42" step="1" value="24"/>
+          <input type="number" id="font-size-num"   min="12" max="42" step="1" value="24"/>
+        </div>
+
+        <label>Zoom</label>
+        <div class="slider-input-row">
+          <input type="range"  id="zoom-range" min="0.5" max="3" step="0.1" value="1"/>
+          <input type="number" id="zoom-num"   min="0.5" max="3" step="0.1" value="1"/>
+        </div>
+
+        <div class="display-divider"></div>
+
+        <div class="toggle-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-lone-pairs" checked/>
+            Show lone pairs
+          </label>
+        </div>
+        <div class="toggle-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-formal-charges" checked/>
+            Show formal charges
+          </label>
+        </div>
+        <div class="toggle-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-iupac-name" checked/>
+            Show IUPAC name
+          </label>
+        </div>
+        <div class="toggle-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-transparent-bg"/>
+            Transparent background
+          </label>
+        </div>
+
+        <button class="export-btn" id="btn-export-png">Export PNG</button>
+      </div>
+
+      <!-- BREAKDOWN OPTIONS --------------------------------------------- -->
+      <div class="control-group">
+        <div class="group-title">Breakdown Options</div>
+        <div class="toggle-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-show-lewis-breakdown" checked/>
+            Show Lewis step-by-step
+          </label>
+        </div>
+        <div class="toggle-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-show-vsepr-breakdown" checked/>
+            Show VSEPR steps
+          </label>
+        </div>
+        <div class="toggle-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-show-imf-breakdown" checked/>
+            Show IMF explanation
+          </label>
+        </div>
+        <div class="toggle-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-show-polarity-breakdown" checked/>
+            Show Polarity flowchart
+          </label>
+        </div>
+        <button class="export-btn" id="btn-copy-breakdown" style="margin-top:10px;">Copy Breakdown Text</button>
+      </div>
+
+    </aside>
+
+    <!-- ─── MAIN CANVAS / BREAKDOWN COLUMN ──────────────────────────── -->
+    <main class="preview-panel">
+
+      <!-- Tab strip ----------------------------------------------------- -->
+      <div class="tab-strip" role="tablist">
+        <button class="tab-btn active" role="tab"
+                data-tab="molecules"
+                id="tab-molecules"
+                aria-selected="true"
+                aria-controls="tab-panel-molecules">
+          Molecules &amp; Ions
+        </button>
+        <button class="tab-btn" role="tab"
+                data-tab="rings"
+                id="tab-rings"
+                aria-selected="false"
+                aria-controls="tab-panel-rings">
+          Ring Structures
+        </button>
+      </div>
+
+      <!-- Tab 1: Molecules & Ions (the existing tool) ------------------- -->
+      <div class="tab-panel" id="tab-panel-molecules"
+           role="tabpanel" aria-labelledby="tab-molecules">
+
+        <div class="preview-label">Lewis Structure</div>
+
+        <div class="canvas-scroll-wrapper">
+          <div id="lewis-canvas-wrap" class="checker-bg white-bg">
+            <canvas id="lewis-canvas" width="700" height="380"></canvas>
+          </div>
+        </div>
+
+        <!-- IUPAC name display (IUPAC-1) — shown just below the Lewis canvas -->
+        <div id="main-iupac-wrap" style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+          <div id="main-iupac-name" class="iupac-display" style="display:none; flex:1; font-size:15px;"></div>
+          <button id="btn-copy-main-iupac" class="action-btn copy-iupac-btn"
+                  style="display:none; padding:4px 10px; font-size:13px; white-space:nowrap;"
+                  title="Copy IUPAC name to clipboard">Copy name</button>
+        </div>
+
+        <!-- 3D viewer controls + canvas (R7-1) — shown below the Lewis canvas -->
+        <div id="main-3d-controls" style="margin-top:10px;">
+          <button class="action-btn" id="btn-main-3d" style="display:none;">View in 3D</button>
+          <span id="main-3d-status" style="margin-left:10px; color:var(--text-dim); font-size:13px;"></span>
+        </div>
+        <div id="main-3d-wrap" style="display:none; margin-top:12px;">
+          <div class="preview-label">3D Model</div>
+          <div class="canvas-scroll-wrapper">
+            <div id="main-3d-canvas-wrap" class="checker-bg white-bg" style="padding:8px;">
+              <div id="main-3d-viewer" style="width:700px; height:500px; background:#fff;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resonance strip (shown only when applicable) -->
+        <div id="resonance-strip-wrap" style="display:none; margin-top:18px;">
+          <div class="preview-label">Resonance Structures</div>
+          <div class="canvas-scroll-wrapper">
+            <div id="resonance-strip" class="checker-bg white-bg">
+              <!-- resonance canvases injected here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- VSEPR geometry canvas (shown only for applicable covalent molecules) -->
+        <div id="vsepr-canvas-wrap-outer" style="display:none; margin-top:18px;">
+          <div class="preview-label">Molecular Geometry</div>
+          <div class="canvas-scroll-wrapper">
+            <div id="vsepr-canvas-wrap" class="checker-bg white-bg">
+              <canvas id="vsepr-canvas" width="700" height="380"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakdown sections -->
+        <section id="breakdown-lewis"     class="breakdown-section" style="display:none;"></section>
+        <section id="breakdown-resonance" class="breakdown-section" style="display:none;"></section>
+        <section id="breakdown-vsepr"     class="breakdown-section" style="display:none;"></section>
+        <section id="breakdown-imf"       class="breakdown-section" style="display:none;"></section>
+        <section id="breakdown-polarity"  class="breakdown-section" style="display:none;"></section>
+
+      </div><!-- /tab-panel-molecules -->
+
+      <!-- Tab 2: Ring Structures ---------------------------------------- -->
+      <div class="tab-panel" id="tab-panel-rings"
+           role="tabpanel" aria-labelledby="tab-rings"
+           style="display:none;">
+
+        <div class="preview-label">Lewis Structure</div>
+
+        <div class="canvas-scroll-wrapper">
+          <div id="ring-lewis-canvas-wrap" class="checker-bg white-bg">
+            <canvas id="ring-lewis-canvas" width="700" height="380"></canvas>
+          </div>
+        </div>
+
+        <!-- IUPAC name display (IUPAC-1) — shown just below the Lewis canvas -->
+        <div id="ring-iupac-wrap" style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+          <div id="ring-iupac-name" class="iupac-display" style="display:none; flex:1; font-size:15px;"></div>
+          <button id="btn-copy-ring-iupac" class="action-btn copy-iupac-btn"
+                  style="display:none; padding:4px 10px; font-size:13px; white-space:nowrap;"
+                  title="Copy IUPAC name to clipboard">Copy name</button>
+        </div>
+
+        <!-- Aromatic display toggle (only shown for benzene) -->
+        <div id="ring-aromatic-toggle-wrap" style="display:none; margin-top:10px;">
+          <label style="margin-right:8px; font-weight:600;">Aromatic Display:</label>
+          <button class="style-btn active" id="btn-aromatic-kekule"
+                  style="display:inline-block; width:auto; padding:4px 14px;">
+            Kekulé (alternating bonds)
+          </button>
+          <button class="style-btn" id="btn-aromatic-circle"
+                  style="display:inline-block; width:auto; padding:4px 14px; margin-left:4px;">
+            Circle (delocalized)
+          </button>
+        </div>
+
+        <!-- Sugar view toggle (only shown for sugars) -->
+        <div id="ring-sugar-toggle-wrap" style="display:none; margin-top:10px;">
+          <label style="margin-right:8px; font-weight:600;">View:</label>
+          <div class="pill-toggle" style="display:inline-flex; border-radius:20px; overflow:hidden; border:1px solid var(--border); background:var(--bg-2);">
+            <button class="pill-btn active" id="btn-sugar-haworth"
+                    style="border:none; padding:6px 16px; background:transparent; color:var(--text); cursor:pointer; font-weight:600;">
+              Haworth
+            </button>
+            <button class="pill-btn" id="btn-sugar-flat"
+                    style="border:none; padding:6px 16px; background:transparent; color:var(--text); cursor:pointer; font-weight:600;">
+              Flat Lewis
+            </button>
+          </div>
+        </div>
+
+        <!-- 3D viewer controls + canvas (R7-1) — shown below the Lewis canvas -->
+        <div id="ring-3d-controls" style="margin-top:10px;">
+          <button class="action-btn" id="btn-ring-3d" style="display:none;">View in 3D</button>
+          <span id="ring-3d-status" style="margin-left:10px; color:var(--text-dim); font-size:13px;"></span>
+        </div>
+        <div id="ring-3d-wrap" style="display:none; margin-top:12px;">
+          <div class="preview-label">3D Model</div>
+          <div class="canvas-scroll-wrapper">
+            <div id="ring-3d-canvas-wrap" class="checker-bg white-bg" style="padding:8px;">
+              <div id="ring-3d-viewer" style="width:700px; height:500px; background:#fff;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resonance strip (benzene only) -->
+        <div id="ring-resonance-strip-wrap" style="display:none; margin-top:18px;">
+          <div class="preview-label">Resonance Structures</div>
+          <div class="canvas-scroll-wrapper">
+            <div id="ring-resonance-strip" class="checker-bg white-bg">
+              <!-- resonance canvases injected here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- VSEPR geometry canvas -->
+        <div id="ring-vsepr-canvas-wrap-outer" style="display:none; margin-top:18px;">
+          <div class="preview-label">Molecular Geometry</div>
+          <div class="canvas-scroll-wrapper">
+            <div id="ring-vsepr-canvas-wrap" class="checker-bg white-bg">
+              <canvas id="ring-vsepr-canvas" width="700" height="380"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakdown sections -->
+        <section id="ring-breakdown-lewis"     class="breakdown-section" style="display:none;"></section>
+        <section id="ring-breakdown-resonance" class="breakdown-section" style="display:none;"></section>
+        <section id="ring-breakdown-vsepr"     class="breakdown-section" style="display:none;"></section>
+        <section id="ring-breakdown-imf"       class="breakdown-section" style="display:none;"></section>
+        <section id="ring-breakdown-polarity"  class="breakdown-section" style="display:none;"></section>
+
+      </div><!-- /tab-panel-rings -->
+
+
+    </main>
+  </div>
+</div>
+
+<!-- ── TOAST HOST ─────────────────────────────────────────────────────── -->
+<div id="alert-container"></div>
+
+<!-- ── SCRIPTS ────────────────────────────────────────────────────────── -->
+<!-- JSmol requires jQuery. Vendor jQuery alongside JSmol for offline use. -->
+<script src="js/jquery/jquery.min.js"></script>
+<!-- JSmol library (vendored — see docs/jsmol-setup.html for install instructions). -->
+<script src="js/JSmol/JSmol.min.nojq.js"></script>
+<!-- 3D cache manifest (R7-2) — generated by scripts/build-3d-cache.js.
+     If the file is missing (cache hasn't been built yet), the adapter falls
+     back to live CACTVS for every lookup. A 404 here is harmless. -->
+<script src="js/3d-cache/manifest.js"></script>
+<!-- IUPAC name cache manifest (IUPAC-1) — generated by scripts/build-iupac-cache.js.
+     Same pattern as the 3D cache: 404 is harmless, adapter falls back to live. -->
+<script src="js/iupac-cache/manifest.js"></script>
+
+<script src="app.js"></script>
+<script src="color-picker.js"></script>
+<script src="periodic-data.js"></script>
+<script src="polyatomic-ion-data.js"></script>
+<script src="formal-charge.js"></script>
+<script src="condensed-formula-parser.js"></script>
+<script src="chain-engine.js"></script>
+<script src="ring-formula-parser.js"></script>
+<script src="ring-engine.js"></script>
+<script src="formula-parser.js"></script>
+<script src="lewis-engine.js"></script>
+<script src="ionic-engine.js"></script>
+<script src="resonance-engine.js"></script>
+<script src="vsepr-engine.js"></script>
+<script src="polarity-engine.js"></script>
+<script src="imf-engine.js"></script>
+<script src="lewis-renderer.js"></script>
+<script src="vsepr-renderer.js"></script>
+<script src="breakdown-renderer.js"></script>
+<script src="jsmol-adapter.js"></script>
+<script src="iupac-adapter.js"></script>
+<script src="lewis-vsepr.js"></script>
+
+</body>
+</html>

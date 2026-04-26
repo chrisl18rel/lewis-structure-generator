@@ -1,0 +1,367 @@
+<!-- docs/jsmol-setup.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>JSmol Setup Instructions — Lewis Structure Generator</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+       max-width: 780px; margin: 2em auto; padding: 0 1em; line-height: 1.55;
+       color: #e0e0e0; background: #1a1a1a; }
+h1 { color: #4a9eff; border-bottom: 2px solid #333; padding-bottom: 0.4em; }
+h2 { color: #4a9eff; margin-top: 1.6em; }
+h3 { color: #d4d4d4; }
+code { background: #2a2a2a; padding: 2px 6px; border-radius: 3px;
+       font-family: 'SF Mono', Menlo, Consolas, monospace; color: #f0a060; }
+pre { background: #2a2a2a; padding: 12px; border-radius: 4px; overflow-x: auto;
+      border-left: 3px solid #4a9eff; }
+pre code { background: transparent; padding: 0; color: #d4d4d4; }
+.callout { background: #2a2a2a; border-left: 4px solid #f0a060; padding: 10px 14px;
+           margin: 1em 0; border-radius: 0 4px 4px 0; }
+.callout.warning { border-left-color: #f05050; }
+.callout.success { border-left-color: #50c878; }
+.step-num { display: inline-block; background: #4a9eff; color: #fff;
+            width: 1.6em; height: 1.6em; line-height: 1.6em; border-radius: 50%;
+            text-align: center; font-weight: bold; margin-right: 8px; font-size: 0.9em; }
+a { color: #4a9eff; }
+ul, ol { padding-left: 1.8em; }
+li { margin-bottom: 0.3em; }
+.filetree { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 0.9em;
+            background: #2a2a2a; padding: 12px; border-radius: 4px; white-space: pre; }
+</style>
+</head>
+<body>
+
+<h1>JSmol Setup Instructions</h1>
+
+<p>The Lewis Structure Generator's "View in 3D" feature uses
+<strong>JSmol</strong>, a JavaScript-based molecular viewer from the Jmol
+project. Because JSmol is ~15 MB and we don't want to bloat the repo by
+checking it into git, you'll install it once manually and commit the
+files.</p>
+
+<div class="callout warning">
+<strong>Before you start:</strong> This needs to be done on a computer (not
+a phone), and you'll need about 15&nbsp;MB of free space in the repo.
+You'll do this once; after that, the 3D viewer just works.
+</div>
+
+<h2>What you'll end up with</h2>
+
+<p>Your repo should have this structure after setup:</p>
+
+<div class="filetree">chrisl18rel.github.io/
+├── index.html
+├── lewis-vsepr.js
+├── jsmol-adapter.js
+├── ... (other JS/CSS files)
+├── js/
+│   ├── jquery/
+│   │   └── jquery.min.js
+│   └── JSmol/
+│       ├── JSmol.min.nojq.js
+│       └── j2s/
+│           └── (hundreds of files — JSmol's renderer assets)
+└── docs/
+    └── jsmol-setup.html  (this file)</div>
+
+<h2>Step 1 — Download jQuery</h2>
+
+<p><span class="step-num">1</span>
+Go to
+<a href="https://jquery.com/download/" target="_blank">jquery.com/download/</a>
+and click "Download the compressed, production jQuery" (the file is named
+something like <code>jquery-3.7.1.min.js</code>).</p>
+
+<p><span class="step-num">2</span>
+Create a folder called <code>js/jquery/</code> inside your repo.</p>
+
+<p><span class="step-num">3</span>
+Save the downloaded file as <code>js/jquery/jquery.min.js</code>
+(rename it if needed — our <code>index.html</code> looks for exactly that
+filename).</p>
+
+<h2>Step 2 — Download JSmol</h2>
+
+<p><span class="step-num">1</span>
+Go to the Jmol SourceForge page:
+<a href="https://sourceforge.net/projects/jmol/files/Jmol/" target="_blank">sourceforge.net/projects/jmol/files/Jmol/</a></p>
+
+<p><span class="step-num">2</span>
+Navigate to the newest <strong>Version X.X.X</strong> folder, then inside
+to the folder for that version's binaries. You want the file named
+<code>Jmol-X.X.X-binary.zip</code> (around 90–100 MB).</p>
+
+<p><span class="step-num">3</span>
+Download and unzip it. Inside, find the folder named <code>jsmol/</code>.
+This is the one you need — the other folders are for the desktop Jmol
+application, which we don't need.</p>
+
+<p><span class="step-num">4</span>
+Create a folder called <code>js/JSmol/</code> inside your repo.</p>
+
+<p><span class="step-num">5</span>
+Copy the <strong>contents</strong> of the extracted <code>jsmol/</code>
+folder (not the folder itself) into your repo's <code>js/JSmol/</code>.
+You should end up with <code>js/JSmol/JSmol.min.nojq.js</code> directly
+and a <code>js/JSmol/j2s/</code> subfolder with hundreds of files.</p>
+
+<div class="callout">
+<strong>Tip:</strong> The <code>jsmol/</code> folder contains a lot of
+example HTML files and unused variants of JSmol. You can delete everything
+except these to save space:
+<ul>
+  <li><code>JSmol.min.nojq.js</code> (the minified, no-jQuery-bundled version — we load jQuery separately)</li>
+  <li><code>j2s/</code> (entire folder — these are the renderer assets)</li>
+</ul>
+You can safely delete: the HTML example files, <code>php/</code>,
+<code>idioma/</code>, and the other <code>.js</code> variants of JSmol.
+This brings the size down from ~90 MB to ~15 MB.
+</div>
+
+<h2>Step 3 — Commit and push</h2>
+
+<p><span class="step-num">1</span>
+In your terminal:</p>
+
+<pre><code>git add js/
+git commit -m "Add JSmol library for 3D molecule viewer"
+git push</code></pre>
+
+<p><span class="step-num">2</span>
+Wait a minute for GitHub Pages to redeploy.</p>
+
+<p><span class="step-num">3</span>
+Open your site. In the Lewis tool, generate a structure like
+<code>phenol</code> or <code>alpha-glucose</code>. The "View in 3D" button
+below the Lewis canvas should now be enabled.</p>
+
+<div class="callout success">
+<strong>Done (basic install)!</strong> Click "View in 3D" and JSmol will
+fetch a 3D model from CACTVS (NIH's chemical structure service) and
+render it below the Lewis structure. Drag with your mouse to rotate;
+scroll to zoom.
+</div>
+
+<h2>Step 4 — Build the 3D cache (optional but recommended)</h2>
+
+<p>By default, every "View in 3D" click hits NIH's CACTVS server to
+fetch the 3D structure. That's about 1–5 seconds per load, and it
+doesn't work offline. The tool includes a build script that pre-fetches
+3D structures for every supported molecule and saves them to your repo,
+so loads are instant and work even when the classroom internet is
+flaky.</p>
+
+<div class="callout">
+<strong>These instructions assume Mac.</strong> You'll need Node.js
+installed, your repo cloned locally (via Claude Cowork or
+<code>git clone</code>), and Terminal access. If you've already set up
+clasp for your Apps Script projects, you already have everything you
+need.
+</div>
+
+<h3>Step 4a — Install Node.js (if you haven't already)</h3>
+
+<p><span class="step-num">1</span>
+Open Terminal (press <code>Cmd + Space</code>, type "Terminal", press Return).</p>
+
+<p><span class="step-num">2</span>
+Check if Node is already installed by running:</p>
+
+<pre><code>node --version</code></pre>
+
+<p>If you see something like <code>v20.10.0</code> (any v18 or newer),
+you're good — skip to Step 4b. If you get "command not found" or a
+version older than v18, install Node from
+<a href="https://nodejs.org/" target="_blank">nodejs.org</a> — grab the
+LTS version, run the installer, and then re-open Terminal and re-check
+with <code>node --version</code>.</p>
+
+<h3>Step 4b — Make sure your repo is cloned locally</h3>
+
+<p>You need the files on your computer, not just on GitHub. If you
+already have the repo on your Mac (from Claude Cowork or a previous
+<code>git clone</code>), you're set. Otherwise, in Terminal:</p>
+
+<pre><code>cd ~/Documents
+git clone https://github.com/chrisl18rel/chrisl18rel.github.io.git</code></pre>
+
+<p>This downloads the repo into <code>~/Documents/chrisl18rel.github.io/</code>.
+If you cloned it to a different folder, substitute that path throughout the
+remaining steps.</p>
+
+<h3>Step 4c — Navigate to the repo</h3>
+
+<p><span class="step-num">1</span>
+In Terminal:</p>
+
+<pre><code>cd ~/Documents/chrisl18rel.github.io</code></pre>
+
+<p><span class="step-num">2</span>
+Verify you're in the right folder by listing what's there:</p>
+
+<pre><code>ls</code></pre>
+
+<p>You should see files like <code>index.html</code>,
+<code>lewis-vsepr.js</code>, <code>jsmol-adapter.js</code>,
+<code>scripts/</code>, etc. If not, you're in the wrong folder —
+use <code>cd</code> to navigate to wherever your repo actually is.</p>
+
+<h3>Step 4d — Run the build script</h3>
+
+<p><span class="step-num">1</span>
+From the repo root, run:</p>
+
+<pre><code>node scripts/build-3d-cache.js</code></pre>
+
+<p><span class="step-num">2</span>
+You'll see output like this as it works:</p>
+
+<pre><code>Building 3D cache for Lewis Structure Generator
+================================================
+
+Will fetch 98 unique molecules from CACTVS
+Each request is paced at 400ms to be polite to the server.
+Expected runtime: ~40s
+
+[1/98] 1,2-dibromobenzene … OK (2341 bytes)
+[2/98] 1,2-dichlorobenzene … OK (2248 bytes)
+[3/98] 1,2-dinitrobenzene … OK (2583 bytes)
+...</code></pre>
+
+<p><span class="step-num">3</span>
+The script takes about 45–90 seconds. It fetches one molecule every
+400ms (pacing is on purpose — we're polite to NIH's free service).</p>
+
+<p><span class="step-num">4</span>
+When it finishes, you'll see:</p>
+
+<pre><code>================================================
+Done. 94 cached, 4 failed.
+
+Failures (these will still work via live CACTVS at runtime):
+  - sulfur hypofluorite: HTTP 404
+  - trithiophosphite: HTTP 404
+  ...</code></pre>
+
+<p>Failed molecules aren't blocking — the tool falls back to live CACTVS
+for those. If you want, share the failure list with me and I'll figure
+out alternate CACTVS names we can use.</p>
+
+<div class="callout">
+<strong>Tip:</strong> The script is resumable. If you interrupt it
+(<code>Ctrl+C</code>) or your internet drops, run it again and it'll
+skip molecules that are already cached.
+</div>
+
+<h3>Step 4e — Commit and push the cache</h3>
+
+<p><span class="step-num">1</span>
+Still in Terminal, from the repo root:</p>
+
+<pre><code>git add js/3d-cache/
+git commit -m "Build 3D structure cache"
+git push</code></pre>
+
+<p><span class="step-num">2</span>
+Wait ~30 seconds for GitHub Pages to redeploy, then test your site.
+Click "View in 3D" on a common molecule like water or benzene — it
+should load instantly now (instead of the 1–5 second CACTVS fetch).</p>
+
+<div class="callout success">
+<strong>Done (with cache)!</strong> 3D models for the cached molecules
+now load instantly and work offline. Uncached molecules still fall back
+to live CACTVS.
+</div>
+
+<div class="callout">
+<strong>When to rebuild the cache:</strong> Re-run the build script if
+you add new molecules to the name table (in <code>jsmol-adapter.js</code>'s
+<code>NAME_MAP</code>) or if CACTVS updates their 3D models and you want
+the fresh versions. The process is the same: <code>cd</code> into the
+repo, run <code>node scripts/build-3d-cache.js</code>, commit and push.
+</div>
+
+<h2>Step 5 — Build the IUPAC name cache (optional but recommended)</h2>
+
+<p>Just like the 3D cache, IUPAC names are fetched from CACTVS. Without
+a local cache, every molecule shown in the tool triggers a CACTVS request
+to get its IUPAC name. With a local cache, names display instantly and
+work offline.</p>
+
+<p><span class="step-num">1</span>
+From the repo root (where you ran the 3D cache script):</p>
+
+<pre><code>node scripts/build-iupac-cache.js</code></pre>
+
+<p><span class="step-num">2</span>
+Same as the 3D cache: the script paces requests at 400ms and takes about
+45–90 seconds. Output looks like:</p>
+
+<pre><code>[1/98] 1,2-dibromobenzene … OK → 1,2-dibromobenzene
+[2/98] 1,2-dichlorobenzene … OK → 1,2-dichlorobenzene
+...
+[12/98] alpha-d-glucose … OK → (2R,3R,4S,5S,6R)-6-(hydroxymethyl)oxane-2,3,4,5-tetrol
+...</code></pre>
+
+<p><span class="step-num">3</span>
+When finished, commit and push:</p>
+
+<pre><code>git add js/iupac-cache/
+git commit -m "Build IUPAC name cache"
+git push</code></pre>
+
+<div class="callout success">
+<strong>Done (with name cache)!</strong> The tool now shows IUPAC names
+instantly under the Lewis structure. Users can also type IUPAC names in
+the input box (e.g., "propan-2-ol" or "acetic acid") and the tool will
+look up the formula via CACTVS and render the structure.
+</div>
+
+<div class="callout">
+<strong>Heads up:</strong> IUPAC name <em>input</em> always goes through
+live CACTVS (we can't pre-cache unknown user inputs). So that feature
+needs a working internet connection. The cached names are only for the
+<em>display</em> under the Lewis canvas.
+</div>
+
+<h2>Troubleshooting</h2>
+
+<h3>The button stays gray/disabled saying "library not installed"</h3>
+<p>JSmol didn't load. Open your browser's DevTools (F12) → Console tab and
+look for 404 errors on <code>JSmol.min.nojq.js</code> or
+<code>jquery.min.js</code>. The paths in <code>index.html</code> are
+<code>js/JSmol/JSmol.min.nojq.js</code> and
+<code>js/jquery/jquery.min.js</code> — double-check your folder structure
+matches exactly.</p>
+
+<h3>The button is enabled but the 3D view says "loading…" forever</h3>
+<p>CACTVS (the NIH server that provides 3D structures) might be slow or
+down. Check your internet connection, try a different molecule, or try
+again in a few minutes.</p>
+
+<h3>The 3D view shows for some molecules but not others</h3>
+<p>CACTVS doesn't have every molecule. Common ones (water, methane,
+benzene, glucose) work reliably. Unusual ones (like made-up polyatomic
+ions) may not. This is expected behavior.</p>
+
+<h3>GitHub rejects my push — file too large</h3>
+<p>GitHub blocks files over 100 MB. JSmol's individual files are all
+small, but if you accidentally committed the full SourceForge zip
+(~90 MB) or the Java application JAR, that might be the culprit. Make
+sure you only commit the contents of the <code>jsmol/</code> folder.</p>
+
+<h2>Why this setup?</h2>
+
+<p>JSmol is self-contained — once vendored, it runs entirely in the
+browser with no server-side component. Your GitHub Pages site serves the
+JS files; each visitor's browser runs the viewer. The only external call
+is to CACTVS (<code>cactus.nci.nih.gov</code>) to fetch 3D coordinates
+for named molecules. Nothing comes back to your machine.</p>
+
+<p>If CACTVS ever goes down or becomes unreliable, a future update (R7-2)
+will pre-fetch 3D models for common molecules and ship them alongside the
+app, so the most common use cases keep working offline.</p>
+
+</body>
+</html>
