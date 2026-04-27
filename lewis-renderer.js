@@ -303,12 +303,12 @@ function _buildLpObstacles(structure, env) {
 // This matches how textbooks distribute lone pairs: into the most visually
 // empty region around the atom, NOT into the same cardinal slot every time.
 // ─────────────────────────────────────────────────────────────────────────────
-function placeLonePairs(ctx, structure, atom, P, env) {
+function placeLonePairs(ctx, structure, atom, P, env, obstacles) {
   const { fontPx, dotPx } = env;
   const radius  = fontPx * 0.9;              // distance from atom center to dot pair center
   const pairGap = dotPx * 2.6;
 
-  // Occupied (bond) angles from this atom's point of view
+  // Bond angles incident on this atom
   const occupied = [];
   for (const b of structure.bonds) {
     let other = null;
@@ -320,150 +320,160 @@ function placeLonePairs(ctx, structure, atom, P, env) {
     occupied.push(Math.atan2(dy / L, dx / L));
   }
 
-  // ─── Special case: 2 lone pairs on an atom with 1–2 bonded neighbors ──
-  // Covers terminal O atoms in CO2/CH2O (1 bond + 2 LPs), water/ether/
-  // alcohol O atoms (2 bonds + 2 LPs), and furan-style heterocycle O
-  // atoms. The 8-slot scorer below tends to pick the most-empty cardinal
-  // AND its adjacent slot, putting the two pairs only 45° apart and
-  // letting the inner dots collide. Instead, derive a clean axis from
-  // the bond geometry and place the LPs symmetrically about it.
-  if (atom.lonePairs === 2 && (occupied.length === 1 || occupied.length === 2)) {
-    let axisAngle;        // direction the pair of LPs is centered on
-    let halfSpread;       // angular offset of each LP from that axis
-
-    if (occupied.length === 1) {
-      // Single bond (e.g., terminal O in CO2): LPs perpendicular to the
-      // bond, one on each side of the bond axis (180° apart total).
-      axisAngle  = occupied[0];
-      halfSpread = Math.PI / 2;
-    } else {
-      // Two bonds. If they are (nearly) anti-parallel — as in horizontal
-      // H–O–H, BeF2 central, etc. — the bisector is degenerate, so use
-      // the bond axis and place LPs perpendicular to it. Otherwise it's
-      // a V-shape (water-bent, furan O): use the anti-bisector of the
-      // two bonds with a 45° flank → 90° between LPs.
-      const bondDelta = Math.abs(normalizeAngle(occupied[0] - occupied[1]));
-      if (Math.abs(bondDelta - Math.PI) < 0.17) {
-        axisAngle  = occupied[0];
-        halfSpread = Math.PI / 2;
-      } else {
-        const sumX = Math.cos(occupied[0]) + Math.cos(occupied[1]);
-        const sumY = Math.sin(occupied[0]) + Math.sin(occupied[1]);
-        const bisector = Math.atan2(sumY, sumX);
-        axisAngle  = normalizeAngle(bisector + Math.PI);
-        halfSpread = Math.PI / 4;
-      }
+  // ── Phase 1: try the textbook "ideal" angles for common geometries ──
+  // (water bent, water linear, CO2-style terminal O, BF3-style terminal F,
+  // furan O, etc.) If the ideal angles produce dots that crash into atom
+  // labels, bonds, or already-placed lone pairs, rotate the WHOLE pattern
+  // (preserving the relative angles between the LPs) by small increments
+  // until everything clears. If no rotation in ±45° works, fall through
+  // to phase 2.
+  const idealAngles = _idealLpAngles(atom, occupied);
+  if (idealAngles) {
+    const placed = _tryWithRotation(idealAngles, P, radius, pairGap, dotPx,
+                                    atom.index, obstacles);
+    if (placed) {
+      _drawLpsAndAddObstacles(ctx, placed, P, radius, pairGap, dotPx, obstacles);
+      return;
     }
-
-    const lpAngles = [
-      normalizeAngle(axisAngle - halfSpread),
-      normalizeAngle(axisAngle + halfSpread)
-    ];
-    ctx.fillStyle = LV_STATE.dotColor;
-    for (const ang of lpAngles) {
-      const cx = P.x + Math.cos(ang) * radius;
-      const cy = P.y + Math.sin(ang) * radius;
-      const ux = -Math.sin(ang), uy = Math.cos(ang);
-      ctx.beginPath();
-      ctx.arc(cx + ux * pairGap / 2, cy + uy * pairGap / 2, dotPx, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(cx - ux * pairGap / 2, cy - uy * pairGap / 2, dotPx, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    return;
   }
 
-  // ─── Special case: 3 lone pairs on an atom with 1 bonded neighbor ─────
-  // Terminal halogens (F, Cl, Br, I) in BF3, BCl3, CCl4-style structures,
-  // and any X–F / X–Cl / X–Br / X–I where the halogen has its standard
-  // three lone pairs. Place LPs at the anti-bond direction plus the two
-  // perpendicular sides — three positions 90° apart that fully wrap the
-  // half-plane opposite the bond. The 8-slot scorer below would otherwise
-  // bunch them at N + NE + NW (or the equivalent for tilted bonds).
+  // ── Phase 2: collision-aware slot scorer ──
+  // Score 16 candidate angles (every 22.5°). The score combines bond
+  // emptiness (positive — high when the slot is far from any bond) and a
+  // big collision penalty. Pick the top N angles, with a minimum angular
+  // separation so we don't bunch two LPs into the same slot.
+  const NUM_CANDIDATES   = 16;
+  const COLLIDE_PENALTY  = 5;   // larger than max bondDist (π) so collisions are decisive
+  const candidates = [];
+  for (let k = 0; k < NUM_CANDIDATES; k++) {
+    const ang = (2 * Math.PI * k) / NUM_CANDIDATES - Math.PI;
+    let bondDist = Math.PI;
+    for (const o of occupied) {
+      const d = Math.abs(normalizeAngle(ang - o));
+      if (d < bondDist) bondDist = d;
+    }
+    const collides = _lpCollides(ang, P, radius, pairGap, dotPx,
+                                 atom.index, obstacles);
+    candidates.push({ ang, score: bondDist - (collides ? COLLIDE_PENALTY : 0) });
+  }
+  candidates.sort((a, b) => b.score - a.score);
+
+  const minSeparation = Math.PI / 4;
+  const chosen = [];
+  for (const c of candidates) {
+    if (chosen.length >= atom.lonePairs) break;
+    const ok = chosen.every(cc => Math.abs(normalizeAngle(c.ang - cc)) >= minSeparation);
+    if (ok) chosen.push(c.ang);
+  }
+  while (chosen.length < atom.lonePairs) {
+    chosen.push(candidates[chosen.length] ? candidates[chosen.length].ang : 0);
+  }
+
+  _drawLpsAndAddObstacles(ctx, chosen, P, radius, pairGap, dotPx, obstacles);
+}
+
+// Compute the textbook "ideal" angles for the common LP geometries that
+// have a clear correct answer. Returns an array of angles in radians, or
+// null if no special case applies (the slot scorer handles those).
+function _idealLpAngles(atom, occupied) {
+  if (atom.lonePairs === 2 && occupied.length === 1) {
+    // Terminal O in CO2 / CH2O — LPs perpendicular to the bond.
+    const axis = occupied[0];
+    return [
+      normalizeAngle(axis - Math.PI / 2),
+      normalizeAngle(axis + Math.PI / 2)
+    ];
+  }
+  if (atom.lonePairs === 2 && occupied.length === 2) {
+    const bondDelta = Math.abs(normalizeAngle(occupied[0] - occupied[1]));
+    if (Math.abs(bondDelta - Math.PI) < 0.17) {
+      // Anti-parallel bonds (horizontal H–O–H, BeF2 central):
+      // LPs perpendicular to the linear axis.
+      const axis = occupied[0];
+      return [
+        normalizeAngle(axis - Math.PI / 2),
+        normalizeAngle(axis + Math.PI / 2)
+      ];
+    }
+    // V-shape (water-bent, furan O): symmetric flank around anti-bisector.
+    const sumX = Math.cos(occupied[0]) + Math.cos(occupied[1]);
+    const sumY = Math.sin(occupied[0]) + Math.sin(occupied[1]);
+    const bisector = Math.atan2(sumY, sumX);
+    const antiBis  = normalizeAngle(bisector + Math.PI);
+    return [
+      normalizeAngle(antiBis - Math.PI / 4),
+      normalizeAngle(antiBis + Math.PI / 4)
+    ];
+  }
   if (atom.lonePairs === 3 && occupied.length === 1) {
+    // Terminal halogen with 3 LPs (BF3, BCl3, etc.): anti-bond +
+    // both perpendiculars.
     const antiBond = normalizeAngle(occupied[0] + Math.PI);
-    const lpAngles = [
+    return [
       antiBond,
       normalizeAngle(antiBond - Math.PI / 2),
       normalizeAngle(antiBond + Math.PI / 2)
     ];
-    ctx.fillStyle = LV_STATE.dotColor;
-    for (const ang of lpAngles) {
-      const cx = P.x + Math.cos(ang) * radius;
-      const cy = P.y + Math.sin(ang) * radius;
-      const ux = -Math.sin(ang), uy = Math.cos(ang);
-      ctx.beginPath();
-      ctx.arc(cx + ux * pairGap / 2, cy + uy * pairGap / 2, dotPx, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(cx - ux * pairGap / 2, cy - uy * pairGap / 2, dotPx, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    return;
   }
+  return null;
+}
 
-  // Candidate slots: 8 directions (more flexibility than 4 cardinal)
-  const CANDIDATES = 8;
-  const slots = [];
-  for (let k = 0; k < CANDIDATES; k++) {
-    const ang = (2 * Math.PI * k) / CANDIDATES - Math.PI / 2;  // start at north
-    slots.push(ang);
-  }
-
-  // Score each slot by angular distance to nearest bond
-  const scored = slots.map(ang => {
-    if (occupied.length === 0) return { ang, dist: Math.PI };
-    let minD = Math.PI;
-    for (const o of occupied) {
-      const d = Math.abs(normalizeAngle(ang - o));
-      if (d < minD) minD = d;
-    }
-    return { ang, dist: minD };
-  });
-
-  // Sort by (distance desc, then by proximity-to-cardinal so ties prefer N/E/S/W)
-  scored.sort((a, b) => {
-    if (Math.abs(a.dist - b.dist) > 1e-6) return b.dist - a.dist;
-    const aCard = Math.min(
-      Math.abs(a.ang), Math.abs(a.ang - Math.PI / 2),
-      Math.abs(a.ang + Math.PI / 2), Math.abs(a.ang - Math.PI),
-      Math.abs(a.ang + Math.PI)
+// Try a base placement at angles `idealAngles`, then incrementally rotate
+// the whole pattern by ±5°, ±10°, ... up to ±45°, looking for a rotation
+// where every LP clears all obstacles. Returns the rotated angle array
+// or null if nothing in the search range works.
+function _tryWithRotation(idealAngles, P, radius, pairGap, dotPx, ownIdx, obstacles) {
+  const offsets = [
+    0, 0.087, -0.087, 0.175, -0.175, 0.262, -0.262,
+    0.349, -0.349, 0.436, -0.436, 0.524, -0.524,
+    0.611, -0.611, 0.698, -0.698, 0.785, -0.785
+  ];
+  for (const off of offsets) {
+    const rotated = idealAngles.map(a => normalizeAngle(a + off));
+    const anyCollide = rotated.some(a =>
+      _lpCollides(a, P, radius, pairGap, dotPx, ownIdx, obstacles)
     );
-    const bCard = Math.min(
-      Math.abs(b.ang), Math.abs(b.ang - Math.PI / 2),
-      Math.abs(b.ang + Math.PI / 2), Math.abs(b.ang - Math.PI),
-      Math.abs(b.ang + Math.PI)
-    );
-    return aCard - bCard;
-  });
-
-  // Take up to lonePairs chosen slots. Enforce a minimum angular gap between
-  // chosen slots to prevent two pairs landing side-by-side.
-  const minSeparation = Math.PI / 4;    // ~45°
-  const chosen = [];
-  for (const s of scored) {
-    if (chosen.length >= atom.lonePairs) break;
-    const ok = chosen.every(c => Math.abs(normalizeAngle(s.ang - c.ang)) >= minSeparation);
-    if (ok) chosen.push(s);
+    if (!anyCollide) return rotated;
   }
-  // If we still don't have enough slots (very rare — lots of bonds), relax
-  while (chosen.length < atom.lonePairs) chosen.push(scored[chosen.length] || scored[0]);
+  return null;
+}
 
-  // Draw
+// Test whether a lone pair at angle `ang` (drawn as two dots straddling
+// the angle at radius `radius` from atom center P) would collide with any
+// obstacle other than the owning atom's own label.
+function _lpCollides(ang, P, radius, pairGap, dotPx, ownIdx, obstacles) {
+  const cx = P.x + Math.cos(ang) * radius;
+  const cy = P.y + Math.sin(ang) * radius;
+  const ux = -Math.sin(ang), uy = Math.cos(ang);
+  const d1x = cx + ux * pairGap / 2, d1y = cy + uy * pairGap / 2;
+  const d2x = cx - ux * pairGap / 2, d2y = cy - uy * pairGap / 2;
+
+  for (const ob of obstacles) {
+    if (ob.kind === 'label' && ob.atomIndex === ownIdx) continue;
+    const minD  = ob.r + dotPx + 1.5;
+    const minSq = minD * minD;
+    let dx = d1x - ob.x, dy = d1y - ob.y;
+    if (dx * dx + dy * dy < minSq) return true;
+    dx = d2x - ob.x; dy = d2y - ob.y;
+    if (dx * dx + dy * dy < minSq) return true;
+  }
+  return false;
+}
+
+// Draw the chosen lone-pair dots and append their centers to the obstacle
+// list so subsequent atoms' LPs avoid them.
+function _drawLpsAndAddObstacles(ctx, angles, P, radius, pairGap, dotPx, obstacles) {
   ctx.fillStyle = LV_STATE.dotColor;
-  for (let k = 0; k < atom.lonePairs; k++) {
-    const ang = chosen[k].ang;
-    const cx  = P.x + Math.cos(ang) * radius;
-    const cy  = P.y + Math.sin(ang) * radius;
-    // Perpendicular offset so the two dots sit along the tangent
-    const ux  = -Math.sin(ang), uy = Math.cos(ang);
-    ctx.beginPath();
-    ctx.arc(cx + ux * pairGap / 2, cy + uy * pairGap / 2, dotPx, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx - ux * pairGap / 2, cy - uy * pairGap / 2, dotPx, 0, Math.PI * 2);
-    ctx.fill();
+  for (const ang of angles) {
+    const cx = P.x + Math.cos(ang) * radius;
+    const cy = P.y + Math.sin(ang) * radius;
+    const ux = -Math.sin(ang), uy = Math.cos(ang);
+    const d1x = cx + ux * pairGap / 2, d1y = cy + uy * pairGap / 2;
+    const d2x = cx - ux * pairGap / 2, d2y = cy - uy * pairGap / 2;
+    ctx.beginPath(); ctx.arc(d1x, d1y, dotPx, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(d2x, d2y, dotPx, 0, Math.PI * 2); ctx.fill();
+    obstacles.push({ x: d1x, y: d1y, r: dotPx, kind: 'lpDot' });
+    obstacles.push({ x: d2x, y: d2y, r: dotPx, kind: 'lpDot' });
   }
 }
 
