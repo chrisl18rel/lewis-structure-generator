@@ -55,6 +55,7 @@ const IUPAC = (function () {
     if (typeof JSMOL === 'undefined' || !JSMOL.lookupName) return null;
     const cactvsName = JSMOL.lookupName(userInput);
     if (!cactvsName) return null;
+    if (COMMON_NAME_OVERRIDES[cactvsName]) return COMMON_NAME_OVERRIDES[cactvsName];
     return _cachedIupacName(cactvsName);
   }
 
