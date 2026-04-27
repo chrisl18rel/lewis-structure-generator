@@ -272,6 +272,37 @@ function placeLonePairs(ctx, structure, atom, P, env) {
     occupied.push(Math.atan2(dy / L, dx / L));
   }
 
+  // ─── Special case: 2 lone pairs on an atom with 2 bonded neighbors ────
+  // (water, ether O, alcohol O, furan-style heterocycle O, etc.) The
+  // 8-slot scorer below tends to pick the most-empty cardinal AND its
+  // adjacent slot, which puts the two pairs only 45° apart and the
+  // inner dots collide. Instead, place the pairs symmetrically flanking
+  // the anti-bisector of the two bonds — 45° on either side of the
+  // empty direction, giving 90° between pairs and a clean textbook look.
+  if (atom.lonePairs === 2 && occupied.length === 2) {
+    const sumX = Math.cos(occupied[0]) + Math.cos(occupied[1]);
+    const sumY = Math.sin(occupied[0]) + Math.sin(occupied[1]);
+    const bisector = Math.atan2(sumY, sumX);
+    const antiBisector = normalizeAngle(bisector + Math.PI);
+    const lpAngles = [
+      normalizeAngle(antiBisector - Math.PI / 4),
+      normalizeAngle(antiBisector + Math.PI / 4)
+    ];
+    ctx.fillStyle = LV_STATE.dotColor;
+    for (const ang of lpAngles) {
+      const cx = P.x + Math.cos(ang) * radius;
+      const cy = P.y + Math.sin(ang) * radius;
+      const ux = -Math.sin(ang), uy = Math.cos(ang);
+      ctx.beginPath();
+      ctx.arc(cx + ux * pairGap / 2, cy + uy * pairGap / 2, dotPx, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx - ux * pairGap / 2, cy - uy * pairGap / 2, dotPx, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    return;
+  }
+
   // Candidate slots: 8 directions (more flexibility than 4 cardinal)
   const CANDIDATES = 8;
   const slots = [];
