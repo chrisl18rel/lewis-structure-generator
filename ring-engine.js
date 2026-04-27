@@ -853,8 +853,12 @@ function _emitHydroxymethyl(atoms, bonds, ringAtomIdx, ax, ay, rx, ry, tx, ty) {
   // The -OH hydrogen
   let hOHx, hOHy;
   if (isHaworthStyle) {
-    // Haworth: H of OH goes horizontally to the right of the O
-    hOHx = oX + SUB_BOND_LENGTH * 0.75;
+    // Haworth: H of OH goes horizontally OUTWARD from the ring center
+    // (right of O for right-side ring atoms, left of O for left-side).
+    // Same outward-direction rule as plain -OH — keeps the H from
+    // crashing into adjacent ring atoms or substituents.
+    const hSign = ax >= 0 ? 1 : -1;
+    hOHx = oX + hSign * SUB_BOND_LENGTH * 0.75;
     hOHy = oY;
   } else {
     // Radial: extend further outward with slight tangent offset
