@@ -226,6 +226,13 @@ function drawAtomsWithLonePairs(ctx, structure, env) {
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'middle';
 
+  // Build the lone-pair obstacle list once. This is what placeLonePairs
+  // checks against to avoid landing dots on top of atom labels, bond
+  // segments, or previously placed lone pairs. The list grows as we go
+  // — each atom's chosen LP positions are appended so subsequent atoms
+  // see them as keep-out zones.
+  const obstacles = _buildLpObstacles(structure, env);
+
   for (const a of structure.atoms) {
     const P = env.toPx(a);
 
@@ -236,9 +243,50 @@ function drawAtomsWithLonePairs(ctx, structure, env) {
 
     // Lone pairs
     if (LV_STATE.showLonePairs && a.lonePairs > 0) {
-      placeLonePairs(ctx, structure, a, P, env);
+      placeLonePairs(ctx, structure, a, P, env, obstacles);
     }
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Build a pixel-space keep-out list for lone-pair placement. Each obstacle
+// is { x, y, r, kind, atomIndex? } — a candidate LP dot center within `r`
+// pixels of any obstacle is treated as a collision. Obstacles include:
+//   • every atom label, with kind:'label' and the owning atom's index so
+//     placeLonePairs can skip the atom whose LPs it's drawing
+//   • sample points along every bond, with kind:'bond' (skipping the
+//     endpoints, which already coincide with atom labels)
+// Lone-pair dots themselves are appended later as kind:'lpDot' so the
+// next atom's LP placement avoids them too.
+// ─────────────────────────────────────────────────────────────────────────────
+function _buildLpObstacles(structure, env) {
+  const { fontPx, dotPx } = env;
+  const labelR = fontPx * 0.55;
+  const bondR  = Math.max(3, dotPx * 0.6);
+  const obstacles = [];
+
+  for (const a of structure.atoms) {
+    const P = env.toPx(a);
+    obstacles.push({ x: P.x, y: P.y, r: labelR, kind: 'label', atomIndex: a.index });
+  }
+
+  for (const b of structure.bonds) {
+    const A = env.toPx(structure.atoms[b.i]);
+    const B = env.toPx(structure.atoms[b.j]);
+    const dx = B.x - A.x, dy = B.y - A.y;
+    const len = Math.hypot(dx, dy);
+    const steps = Math.max(2, Math.floor(len / 14));
+    for (let s = 1; s < steps; s++) {
+      const t = s / steps;
+      obstacles.push({
+        x: A.x + dx * t,
+        y: A.y + dy * t,
+        r: bondR,
+        kind: 'bond'
+      });
+    }
+  }
+  return obstacles;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
