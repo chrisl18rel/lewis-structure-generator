@@ -326,6 +326,35 @@ function placeLonePairs(ctx, structure, atom, P, env) {
     return;
   }
 
+  // ─── Special case: 3 lone pairs on an atom with 1 bonded neighbor ─────
+  // Terminal halogens (F, Cl, Br, I) in BF3, BCl3, CCl4-style structures,
+  // and any X–F / X–Cl / X–Br / X–I where the halogen has its standard
+  // three lone pairs. Place LPs at the anti-bond direction plus the two
+  // perpendicular sides — three positions 90° apart that fully wrap the
+  // half-plane opposite the bond. The 8-slot scorer below would otherwise
+  // bunch them at N + NE + NW (or the equivalent for tilted bonds).
+  if (atom.lonePairs === 3 && occupied.length === 1) {
+    const antiBond = normalizeAngle(occupied[0] + Math.PI);
+    const lpAngles = [
+      antiBond,
+      normalizeAngle(antiBond - Math.PI / 2),
+      normalizeAngle(antiBond + Math.PI / 2)
+    ];
+    ctx.fillStyle = LV_STATE.dotColor;
+    for (const ang of lpAngles) {
+      const cx = P.x + Math.cos(ang) * radius;
+      const cy = P.y + Math.sin(ang) * radius;
+      const ux = -Math.sin(ang), uy = Math.cos(ang);
+      ctx.beginPath();
+      ctx.arc(cx + ux * pairGap / 2, cy + uy * pairGap / 2, dotPx, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx - ux * pairGap / 2, cy - uy * pairGap / 2, dotPx, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    return;
+  }
+
   // Candidate slots: 8 directions (more flexibility than 4 cardinal)
   const CANDIDATES = 8;
   const slots = [];
