@@ -67,11 +67,13 @@ const VSEPR_LAYOUTS = {
              { angle:  2*Math.PI/3,     kind:'dash'  },   // down-left back
              { angle: -Math.PI/2,       kind:'lone'  } ], // top: lone pair
 
-  // AX₂E₂ — bent (109.5°) — two lone pairs visually "above" the atom
+  // AX₂E₂ — bent (109.5°) — two lone pairs visually "above" the atom.
+  // Lone-pair ear angles are ±0.55 rad (~31°) from straight-up so the
+  // perpendicular dot pairs in each ear don't collide with the neighbor ear.
   'AX₂E₂': [ { angle:  Math.PI/2 - 0.6, kind:'plane' },   // down-right
              { angle:  Math.PI/2 + 0.6, kind:'plane' },   // down-left
-             { angle: -Math.PI/2 - 0.3, kind:'lone'  },   // upper-left lone
-             { angle: -Math.PI/2 + 0.3, kind:'lone'  } ], // upper-right lone
+             { angle: -Math.PI/2 - 0.55, kind:'lone' },   // upper-left lone
+             { angle: -Math.PI/2 + 0.55, kind:'lone' } ], // upper-right lone
 
   // AXE₃ — linear with 3 LP (rare: HF with hyperlone scaffold; not common HS)
   'AXE₃':  [ { angle: 0,                kind:'plane' },
