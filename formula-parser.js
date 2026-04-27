@@ -191,6 +191,33 @@ function parseFormula(rawInput, overrideType /* 'auto'|'covalent'|'ionic' */ = '
     }
   }
 
+  // ── 4b. Bounce multi-carbon organic formulas with heteroatoms ─────
+  // The flat Lewis engine assumes a single central atom surrounded by
+  // terminals. Formulas like C6H12O6 (glucose), C2H6O (ethanol typed
+  // as a stoichiometric formula), or CH3COOH typed as C2H4O2 fall
+  // outside that model and would render as a meaningless single-C
+  // starburst with all 24 atoms radiating outward.
+  //
+  // Pure CnHm formulas were already routed above. Anything left with
+  // ≥2 carbons AND a non-C, non-H atom needs either a condensed
+  // structural formula (e.g., CH3CH2OH) or the Ring Structures tab
+  // (which supports glucose by name). Surface a clear message instead
+  // of letting the user hit the starburst.
+  if (charge === 0 && type === 'covalent') {
+    const cGroup = atoms.find(a => a.symbol === 'C');
+    const hasHeteroatom = atoms.some(a => a.symbol !== 'C' && a.symbol !== 'H');
+    if (cGroup && cGroup.count >= 2 && hasHeteroatom) {
+      return {
+        ok: false,
+        error:
+          'Multi-carbon organic formulas need a condensed structural form ' +
+          '(e.g. CH3CH2OH for ethanol, CH3COOH for acetic acid) or the ' +
+          'Ring Structures tab. For sugars, switch to Ring Structures and ' +
+          'type the name (e.g. "glucose", "alpha-glucose").'
+      };
+    }
+  }
+
   // ── 5. Normalized string (for display) ────────────────────────────
   const normalizedFormula =
     atoms.map(a => a.symbol + (a.count > 1 ? a.count : '')).join('') +
