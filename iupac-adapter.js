@@ -32,7 +32,8 @@ const IUPAC = (function () {
   // Keyed by the cactvs-normalized name (i.e., what JSMOL.lookupName
   // returns), value is what we display instead. Add entries as needed.
   const COMMON_NAME_OVERRIDES = {
-    'water': 'dihydrogen monoxide, water'
+    'water':              'dihydrogen monoxide, water',
+    'boron trifluoride':  'boron trifluoride'
   };
 
   // ── Cache lookup (structure → name) ──────────────────────────────────
