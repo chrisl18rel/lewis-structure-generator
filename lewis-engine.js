@@ -656,7 +656,20 @@ function layoutAtoms(atoms, bonds, centralIdx) {
   const n = terminalIdx.length;
   if (n === 0) return;
 
-  // Start at the top (−y direction) and go clockwise
+  // Two terminals → horizontal placement (X–A–X). Textbook Lewis structures
+  // draw both linear (CO2, BeF2) and bent (H2O, OF2, H2S) molecules with
+  // the terminals to the left and right of the central atom; the bent
+  // angle itself shows up in the separate Molecular Geometry panel.
+  if (n === 2) {
+    atoms[terminalIdx[0]].x = cx - R;
+    atoms[terminalIdx[0]].y = cy;
+    atoms[terminalIdx[1]].x = cx + R;
+    atoms[terminalIdx[1]].y = cy;
+    return;
+  }
+
+  // 3+ terminals: distribute evenly clockwise starting from the top
+  // (−y direction). Gives trigonal/tetrahedral/octahedral spreads.
   const startAngle = -Math.PI/2;
   for (let k = 0; k < n; k++) {
     const theta = startAngle + (2*Math.PI * k / n);
