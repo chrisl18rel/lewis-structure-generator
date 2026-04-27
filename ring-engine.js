@@ -547,8 +547,12 @@ function _emitHydroxyl(atoms, bonds, ringAtomIdx, ax, ay, rx, ry, tx, ty) {
   const isHaworthStyle = Math.abs(rx) < 0.01;
   let hx, hy;
   if (isHaworthStyle) {
-    // Haworth: place H horizontally to the right of O (readable, compact).
-    hx = ax + SUB_BOND_LENGTH * 0.75;
+    // Haworth: place H horizontally on the OUTSIDE of the ring — right
+    // of O for right-side ring atoms (x > 0), left of O for left-side
+    // (x < 0). Always pointing outward keeps the H from crashing into
+    // the adjacent ring atom (e.g., C4's OH-H landing on top of C3).
+    const hSign = ax >= 0 ? 1 : -1;
+    hx = ax + hSign * SUB_BOND_LENGTH * 0.75;
     hy = ay;
   } else {
     // Radial: splay H to the side (tangent direction) and further outward
