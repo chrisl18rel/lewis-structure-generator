@@ -25,6 +25,16 @@ const IUPAC = (function () {
   const CACTVS_BASE = 'https://cactus.nci.nih.gov/chemical/structure';
   const REQUEST_TIMEOUT_MS = 10000;
 
+  // ── Common-name overrides ────────────────────────────────────────────
+  // For a small set of molecules the strict CACTVS / OPSIN systematic
+  // name is technically correct but pedagogically unhelpful for a high-
+  // school audience (e.g. H2O → "oxidane"). Override those here.
+  // Keyed by the cactvs-normalized name (i.e., what JSMOL.lookupName
+  // returns), value is what we display instead. Add entries as needed.
+  const COMMON_NAME_OVERRIDES = {
+    'water': 'dihydrogen monoxide, water'
+  };
+
   // ── Cache lookup (structure → name) ──────────────────────────────────
   // The build script writes js/iupac-cache/manifest.js which assigns
   // window.IUPAC_CACHE = { "<cactvs-name>": "<iupac-name>", ... }.
