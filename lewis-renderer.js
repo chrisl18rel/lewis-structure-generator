@@ -272,21 +272,44 @@ function placeLonePairs(ctx, structure, atom, P, env) {
     occupied.push(Math.atan2(dy / L, dx / L));
   }
 
-  // ─── Special case: 2 lone pairs on an atom with 2 bonded neighbors ────
-  // (water, ether O, alcohol O, furan-style heterocycle O, etc.) The
-  // 8-slot scorer below tends to pick the most-empty cardinal AND its
-  // adjacent slot, which puts the two pairs only 45° apart and the
-  // inner dots collide. Instead, place the pairs symmetrically flanking
-  // the anti-bisector of the two bonds — 45° on either side of the
-  // empty direction, giving 90° between pairs and a clean textbook look.
-  if (atom.lonePairs === 2 && occupied.length === 2) {
-    const sumX = Math.cos(occupied[0]) + Math.cos(occupied[1]);
-    const sumY = Math.sin(occupied[0]) + Math.sin(occupied[1]);
-    const bisector = Math.atan2(sumY, sumX);
-    const antiBisector = normalizeAngle(bisector + Math.PI);
+  // ─── Special case: 2 lone pairs on an atom with 1–2 bonded neighbors ──
+  // Covers terminal O atoms in CO2/CH2O (1 bond + 2 LPs), water/ether/
+  // alcohol O atoms (2 bonds + 2 LPs), and furan-style heterocycle O
+  // atoms. The 8-slot scorer below tends to pick the most-empty cardinal
+  // AND its adjacent slot, putting the two pairs only 45° apart and
+  // letting the inner dots collide. Instead, derive a clean axis from
+  // the bond geometry and place the LPs symmetrically about it.
+  if (atom.lonePairs === 2 && (occupied.length === 1 || occupied.length === 2)) {
+    let axisAngle;        // direction the pair of LPs is centered on
+    let halfSpread;       // angular offset of each LP from that axis
+
+    if (occupied.length === 1) {
+      // Single bond (e.g., terminal O in CO2): LPs perpendicular to the
+      // bond, one on each side of the bond axis (180° apart total).
+      axisAngle  = occupied[0];
+      halfSpread = Math.PI / 2;
+    } else {
+      // Two bonds. If they are (nearly) anti-parallel — as in horizontal
+      // H–O–H, BeF2 central, etc. — the bisector is degenerate, so use
+      // the bond axis and place LPs perpendicular to it. Otherwise it's
+      // a V-shape (water-bent, furan O): use the anti-bisector of the
+      // two bonds with a 45° flank → 90° between LPs.
+      const bondDelta = Math.abs(normalizeAngle(occupied[0] - occupied[1]));
+      if (Math.abs(bondDelta - Math.PI) < 0.17) {
+        axisAngle  = occupied[0];
+        halfSpread = Math.PI / 2;
+      } else {
+        const sumX = Math.cos(occupied[0]) + Math.cos(occupied[1]);
+        const sumY = Math.sin(occupied[0]) + Math.sin(occupied[1]);
+        const bisector = Math.atan2(sumY, sumX);
+        axisAngle  = normalizeAngle(bisector + Math.PI);
+        halfSpread = Math.PI / 4;
+      }
+    }
+
     const lpAngles = [
-      normalizeAngle(antiBisector - Math.PI / 4),
-      normalizeAngle(antiBisector + Math.PI / 4)
+      normalizeAngle(axisAngle - halfSpread),
+      normalizeAngle(axisAngle + halfSpread)
     ];
     ctx.fillStyle = LV_STATE.dotColor;
     for (const ang of lpAngles) {
